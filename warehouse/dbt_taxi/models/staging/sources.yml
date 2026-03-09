@@ -1,0 +1,8 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: public
+    tables:
+      - name: taxi_trips
+        description: "Raw NYC TLC taxi trips loaded from Parquet into the raw table."
