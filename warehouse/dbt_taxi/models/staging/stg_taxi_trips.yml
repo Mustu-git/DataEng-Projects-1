@@ -23,6 +23,13 @@ models:
         tests:
           - not_null
       - name: payment_type
+        description: >
+          NYC TLC payment type code. Official values: 1=Credit card, 2=Cash,
+          3=No charge, 4=Dispute, 5=Unknown, 6=Voided trip.
+          Value 0 is undocumented but present in Jan 2023 data (71k rows);
+          behaves like credit card (avg tip $3.73, avg total $29) — likely a
+          legacy or mis-coded credit card entry.
         tests:
           - accepted_values:
-              values: [1, 2, 3, 4, 5, 6]
+              arguments:
+                values: [0, 1, 2, 3, 4, 5, 6]

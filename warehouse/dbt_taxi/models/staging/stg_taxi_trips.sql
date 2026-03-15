@@ -8,31 +8,31 @@ cleaned as (
 
     select
         -- Keep these generic for now; we'll align exact column names once we load a sample month
-        cast(pickup_datetime as timestamp)  as pickup_ts,
-        cast(dropoff_datetime as timestamp) as dropoff_ts,
+        tpep_pickup_datetime                as pickup_ts,
+        tpep_dropoff_datetime               as dropoff_ts,
 
-        cast(pulocationid as integer) as pickup_location_id,
-        cast(dolocationid as integer) as dropoff_location_id,
+        cast("PULocationID" as integer)     as pickup_location_id,
+        cast("DOLocationID" as integer)     as dropoff_location_id,
 
-        cast(passenger_count as integer) as passenger_count,
-        cast(trip_distance as double precision) as trip_distance,
+        cast(passenger_count as integer)    as passenger_count,
+        trip_distance,
 
-        cast(fare_amount as double precision) as fare_amount,
-        cast(tip_amount as double precision)  as tip_amount,
-        cast(total_amount as double precision) as total_amount,
+        fare_amount,
+        tip_amount,
+        total_amount,
 
-        cast(payment_type as integer) as payment_type,
+        cast(payment_type as integer)       as payment_type,
 
         -- Derived: trip duration in minutes
         case
-            when dropoff_datetime >= pickup_datetime
-            then extract(epoch from (cast(dropoff_datetime as timestamp) - cast(pickup_datetime as timestamp))) / 60.0
+            when tpep_dropoff_datetime >= tpep_pickup_datetime
+            then extract(epoch from (tpep_dropoff_datetime - tpep_pickup_datetime)) / 60.0
             else null
         end as trip_duration_mins,
 
-        -- Derived: weekend flag (Saturday=6, Sunday=0 in PostgreSQL DOW)
+        -- Derived: weekend flag (Sunday=0, Saturday=6 in PostgreSQL DOW)
         case
-            when extract(dow from cast(pickup_datetime as timestamp)) in (0, 6) then true
+            when extract(dow from tpep_pickup_datetime) in (0, 6) then true
             else false
         end as is_weekend
 
