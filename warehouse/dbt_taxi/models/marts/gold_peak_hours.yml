@@ -1,0 +1,13 @@
+version: 2
+
+models:
+  - name: gold_peak_hours
+    description: "Trip volume and average metrics by hour of day."
+    columns:
+      - name: hour_of_day
+        tests:
+          - not_null
+          - unique
+      - name: trip_count
+        tests:
+          - not_null

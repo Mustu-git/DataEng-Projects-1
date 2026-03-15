@@ -23,12 +23,18 @@ cleaned as (
 
         cast(payment_type as integer) as payment_type,
 
-        -- A simple derived field we can benchmark with
+        -- Derived: trip duration in minutes
         case
             when dropoff_datetime >= pickup_datetime
             then extract(epoch from (cast(dropoff_datetime as timestamp) - cast(pickup_datetime as timestamp))) / 60.0
             else null
-        end as trip_duration_min
+        end as trip_duration_mins,
+
+        -- Derived: weekend flag (Saturday=6, Sunday=0 in PostgreSQL DOW)
+        case
+            when extract(dow from cast(pickup_datetime as timestamp)) in (0, 6) then true
+            else false
+        end as is_weekend
 
     from source
 

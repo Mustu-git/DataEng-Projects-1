@@ -1,0 +1,16 @@
+version: 2
+
+models:
+  - name: gold_zone_demand
+    description: "Trip volume per pickup zone, ranked by demand."
+    columns:
+      - name: pickup_location_id
+        tests:
+          - not_null
+          - unique
+      - name: trip_count
+        tests:
+          - not_null
+      - name: demand_rank
+        tests:
+          - not_null
