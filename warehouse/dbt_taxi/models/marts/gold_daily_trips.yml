@@ -1,0 +1,16 @@
+version: 2
+
+models:
+  - name: gold_daily_trips
+    description: "Daily KPI table: trip counts and revenue derived from staged taxi trips."
+    columns:
+      - name: trip_date
+        tests:
+          - not_null
+          - unique
+      - name: trip_count
+        tests:
+          - not_null
+      - name: total_revenue
+        tests:
+          - not_null
