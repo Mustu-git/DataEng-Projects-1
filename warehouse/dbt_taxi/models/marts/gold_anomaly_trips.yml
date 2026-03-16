@@ -1,0 +1,17 @@
+version: 2
+
+models:
+  - name: gold_anomaly_trips
+    description: >
+      Trips flagged as anomalous based on statistical thresholds.
+      Each row triggered at least one flag. anomaly_count shows how many
+      flags fired on a single trip (multi-flag trips are the most suspicious).
+      Anomaly counts from Jan 2023 data: duration>3h (3,048), zero fare (26,159),
+      zero passengers (51,164), distance>100mi (88), high fare>$500 (37).
+    columns:
+      - name: pickup_ts
+        tests:
+          - not_null
+      - name: anomaly_count
+        tests:
+          - not_null
