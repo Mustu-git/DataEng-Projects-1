@@ -1,16 +1,80 @@
-Data engineering portfolio. NYC TLC Parquet lakehouse with dbt models, data quality checks, and performance benchmarks.
+# NYC Taxi ETL Pipeline
 
-## Project Goal
-Build a production-style analytics pipeline on the NYC TLC Taxi Parquet dataset using dbt. The pipeline converts raw trip records into cleaned staging models and curated “gold” KPI tables, with automated data quality tests and performance benchmarking.
+A production-style batch ETL pipeline built on the NYC TLC Yellow Taxi dataset (~3M rows).
+Demonstrates a full data engineering stack: ingestion, transformation, testing, orchestration, and documentation.
 
-## What this repo produces
-- **Staging model:** `stg_taxi_trips` (typed + cleaned trips, derived duration)
-- **Gold KPI table:** `gold_daily_trips` (daily trips, revenue, averages)
-- (Coming next) Additional gold tables: zone demand, peak hours, anomaly trips
-- (Coming next) Orchestration with Airflow + optional warehouse publishing
+## What this builds
 
-## Skills showcased
-- dbt modeling (sources, refs, staging → marts)
-- Data quality testing (schema + KPI-level tests)
-- Working with large Parquet datasets (partition/incremental-friendly design)
-- Production mindset: reproducible repo structure, docs, and benchmarks
+| Layer | Model | Description |
+|-------|-------|-------------|
+| Bronze | `raw.taxi_trips` | Raw Parquet loaded as-is into Postgres |
+| Silver | `stg_taxi_trips` | Typed, cleaned, renamed columns + derived fields |
+| Gold | `gold_daily_trips` | Daily trips, revenue, avg fare — incremental table |
+| Gold | `gold_zone_demand` | Trip volume per pickup zone, ranked |
+| Gold | `gold_peak_hours` | Trip count and avg metrics by hour of day |
+
+## Results
+
+- **18/18 data quality tests passing** across all models
+- **800x query speedup**: daily aggregation on gold mart runs in 3ms vs 2,463ms on raw table
+- Full pipeline (ingest → dbt run → dbt test) orchestrated with Prefect
+
+## Stack
+
+- **PostgreSQL 15** — data warehouse (Docker)
+- **dbt 1.11.7** — transformation and testing
+- **Prefect 3** — pipeline orchestration
+- **Python 3.11** — ingestion script (pandas + SQLAlchemy)
+
+## How to run
+
+### 1. Start Postgres
+```bash
+docker compose -f docker/docker-compose.yml up -d
+```
+
+### 2. Set up dbt connection
+```bash
+cp warehouse/dbt_taxi/profiles.yml.example ~/.dbt/profiles.yml
+# Edit ~/.dbt/profiles.yml with your credentials
+```
+
+### 3. Run the full pipeline
+```bash
+pip3 install prefect dbt-postgres pandas pyarrow sqlalchemy
+python3 orchestration/pipeline.py
+```
+
+### 4. Run dbt only (data already loaded)
+```bash
+cd warehouse/dbt_taxi
+dbt deps
+dbt run
+dbt test
+```
+
+### 5. Browse dbt docs
+```bash
+cd warehouse/dbt_taxi
+dbt docs generate && dbt docs serve
+```
+
+## Project structure
+
+```
+├── src/ingest_raw.py          # Downloads Parquet and loads into raw.taxi_trips
+├── warehouse/dbt_taxi/        # dbt project
+│   ├── models/staging/        # Silver layer — stg_taxi_trips
+│   └── models/marts/          # Gold layer — daily, zone, peak hour KPIs
+├── orchestration/pipeline.py  # Prefect flow: ingest → dbt run → dbt test
+└── docs/
+    ├── architecture.md        # Pipeline design and data flow
+    └── benchmarks.md          # Raw vs gold query performance results
+```
+
+## Key findings
+
+- `payment_type = 0` appears in 71k rows — undocumented in NYC TLC spec but
+  behaves like credit card (avg tip $3.73). Documented and included in tests.
+- Data contains outlier rows dated as far back as 2008 — retained in gold tables
+  to preserve data fidelity.
