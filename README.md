@@ -12,19 +12,25 @@ Demonstrates a full data engineering stack: ingestion, transformation, testing, 
 | Gold | `gold_daily_trips` | Daily trips, revenue, avg fare — incremental table |
 | Gold | `gold_zone_demand` | Trip volume per pickup zone, ranked |
 | Gold | `gold_peak_hours` | Trip count and avg metrics by hour of day |
+| Gold | `gold_anomaly_trips` | 7-flag anomaly detection (negative duration, >3hrs, >100mi, zero fare, high fare, zero/excess passengers) |
 
 ## Results
 
 - **18/18 data quality tests passing** across all models
 - **800x query speedup**: daily aggregation on gold mart runs in 3ms vs 2,463ms on raw table
-- Full pipeline (ingest → dbt run → dbt test) orchestrated with Prefect
+- Full pipeline (ingest → dbt run → dbt test) orchestrated with **Prefect 3** and **Apache Airflow**
+- Anomaly detection model flags 7 data quality conditions across ~3M rows
 
 ## Stack
 
-- **PostgreSQL 15** — data warehouse (Docker)
-- **dbt 1.11.7** — transformation and testing
-- **Prefect 3** — pipeline orchestration
-- **Python 3.11** — ingestion script (pandas + SQLAlchemy)
+| Tool | Purpose |
+|---|---|
+| PostgreSQL 15 | Data warehouse (Docker) |
+| dbt 1.7 | Transformation, testing, and anomaly detection |
+| Prefect 3 | Primary pipeline orchestration |
+| Apache Airflow | Airflow DAG (alternative orchestrator) |
+| Python 3.11 | Ingestion script (pandas + SQLAlchemy) |
+| GitHub Actions | CI — dbt run + test on every push |
 
 ## How to run
 

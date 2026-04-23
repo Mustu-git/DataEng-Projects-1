@@ -1,0 +1,82 @@
+name: dbt CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "warehouse/dbt_taxi/**"
+  pull_request:
+    branches: [main]
+    paths:
+      - "warehouse/dbt_taxi/**"
+
+jobs:
+  dbt-test:
+    name: Run dbt tests
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: nyc_taxi
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install dbt-postgres==1.7.* pandas pyarrow sqlalchemy psycopg2-binary
+
+      - name: Write profiles.yml
+        run: |
+          mkdir -p ~/.dbt
+          cat > ~/.dbt/profiles.yml << 'EOF'
+          dbt_taxi:
+            target: ci
+            outputs:
+              ci:
+                type: postgres
+                host: localhost
+                port: 5432
+                user: postgres
+                password: postgres
+                dbname: nyc_taxi
+                schema: public
+                threads: 4
+          EOF
+
+      - name: Load raw data
+        run: python3 src/ingest_raw.py
+        env:
+          DB_HOST: localhost
+          DB_PORT: 5432
+          DB_USER: postgres
+          DB_PASSWORD: postgres
+          DB_NAME: nyc_taxi
+
+      - name: dbt deps
+        working-directory: warehouse/dbt_taxi
+        run: dbt deps
+
+      - name: dbt run
+        working-directory: warehouse/dbt_taxi
+        run: dbt run
+
+      - name: dbt test
+        working-directory: warehouse/dbt_taxi
+        run: dbt test
